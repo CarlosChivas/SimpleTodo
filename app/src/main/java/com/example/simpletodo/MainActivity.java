@@ -7,6 +7,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -31,6 +32,13 @@ public class MainActivity extends AppCompatActivity {
     EditText etItem;
     RecyclerView rvItems;
     ItemsAdapter itemsAdapter;
+
+    //Elements for update an item
+    AlertDialog.Builder dialogBuilder;
+    AlertDialog dialog;
+    EditText etEdit;
+    Button buttonDone;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,7 +61,15 @@ public class MainActivity extends AppCompatActivity {
                 saveItems();
             }
         };
-        itemsAdapter = new ItemsAdapter(items, onLongClickListener);
+
+        //Edit item when is clicked
+        ItemsAdapter.OnClickListener onClickListener = new ItemsAdapter.OnClickListener() {
+            @Override
+            public void onItemClicked(int position) {
+                editItem(position);
+            }
+        };
+        itemsAdapter = new ItemsAdapter(items, onLongClickListener, onClickListener);
         rvItems.setAdapter(itemsAdapter);
         rvItems.setLayoutManager(new LinearLayoutManager(this));
 
@@ -63,7 +79,8 @@ public class MainActivity extends AppCompatActivity {
                 String todoItem = etItem.getText().toString();
                 //Add item to the model
                 if(todoItem.equals("")){
-                    Toast.makeText(getApplicationContext(), "Item is empty", Toast.LENGTH_SHORT).show();
+                    //If field is empty, we create a message but we not save nothing
+                    Toast.makeText(getApplicationContext(), "You need to write something", Toast.LENGTH_SHORT).show();
                 }
                 else {
                     items.add(todoItem);
@@ -96,6 +113,36 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             Log.e("MainActivity", "Error writing items", e);
         }
+    }
+
+    //Function for update some item
+    public void editItem(int posicion){
+
+        dialogBuilder = new AlertDialog.Builder(this);
+        final View editTextView = getLayoutInflater().inflate(R.layout.edit, null);
+
+        buttonDone = editTextView.findViewById(R.id.btnEdit);
+
+        etEdit = editTextView.findViewById(R.id.textEdited);
+        etEdit.setText(items.get(posicion));
+        dialogBuilder.setView(editTextView);
+        dialog = dialogBuilder.create();
+        dialog.show();
+
+        buttonDone.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                items.set(posicion, etEdit.getText().toString());
+                //Notify adapter that an item was changed
+                itemsAdapter.notifyDataSetChanged();
+                saveItems();
+                Toast.makeText(getApplicationContext(), "Item was updated", Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+            }
+        });
+
+
+
     }
 
 }
